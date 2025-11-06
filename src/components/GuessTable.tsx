@@ -20,18 +20,20 @@ export default function GuessTable({
   const [selectedGuess, setSelectedGuess] = useState<GuessEntry | null>(null);
   const [showInfo, setShowInfo] = useState<boolean>(false);
 
-  // Always show 5 guess slots even if empty
-  const displayGuesses = guesses.length > 0 ? guesses : Array.from({ length: 5 }, (_, i) => ({
-    guessId: i + 1,
-    targetBlockNumber: 0,
-    userHashGuess: "",
-    tokenSize: 0,
-    paidGuess: false,
-    targetVerified: 0,
-    complex: false,
-    actualHash: "",
-    secretKey: "",
-  }));
+  const displayGuesses =
+    guesses.length > 0
+      ? guesses
+      : Array.from({ length: 5 }, (_, i) => ({
+          guessId: i + 1,
+          targetBlockNumber: 0,
+          userHashGuess: "",
+          tokenSize: 0,
+          paidGuess: false,
+          targetVerified: 0,
+          complex: false,
+          actualHash: "",
+          secretKey: "",
+        }));
 
   const isVerified =
     selectedGuess && Number(selectedGuess.targetVerified) === 2;
@@ -166,7 +168,9 @@ export default function GuessTable({
                     title="Show hashes"
                   >
                     <Info className="w-4 h-4" />
-                    <span className="hidden sm:inline font-mono text-xs">info</span>
+                    <span className="hidden sm:inline font-mono text-xs">
+                      info
+                    </span>
                   </button>
                 </div>
 
@@ -178,19 +182,33 @@ export default function GuessTable({
                     exit={{ opacity: 0, y: -6 }}
                     className="p-4 rounded-2xl border-2 border-cyber-primary/40 bg-gradient-to-br from-cyber-primary/10 to-cyan-500/10 backdrop-blur-sm"
                   >
-                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Hashes</p>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
+                      Hashes
+                    </p>
                     <div className="space-y-3 font-mono break-all">
                       <div>
-                        <span className="text-cyber-accent text-xs">Actual Hash</span>
-                        <p className="text-sm">{selectedGuess.actualHash || "—"}</p>
+                        <span className="text-cyber-accent text-xs">
+                          Actual Hash
+                        </span>
+                        <p className="text-sm">
+                          {selectedGuess.actualHash || "—"}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-cyber-secondary text-xs">Secret Key</span>
-                        <p className="text-sm">{selectedGuess.secretKey || "—"}</p>
+                        <span className="text-cyber-secondary text-xs">
+                          Secret Key
+                        </span>
+                        <p className="text-sm">
+                          {selectedGuess.secretKey || "—"}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-cyber-success text-xs">Dummy Hash</span>
-                        <p className="text-sm">{selectedGuess.userHashGuess || "—"}</p>
+                        <span className="text-cyber-success text-xs">
+                          Dummy Hash
+                        </span>
+                        <p className="text-sm">
+                          {selectedGuess.userHashGuess || "—"}
+                        </p>
                       </div>
                     </div>
                   </motion.div>
