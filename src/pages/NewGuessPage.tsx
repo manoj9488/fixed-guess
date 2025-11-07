@@ -36,6 +36,7 @@ export default function NewGuessPage() {
   const [complex, setComplex] = useState<boolean>(false);
   const modal = useCyberModal();
   const [submit, setSubmit] = useState<string>("submit");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [actualHash, setActualHash] = useState<string>("");
   const [secretKey, setSecretKey] = useState<string>("");
   const [dummyHash, setDummyHash] = useState<string>(
@@ -166,6 +167,7 @@ export default function NewGuessPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return; // prevent double-submit
 
     // Ensure hashes exist even if user didn't type
     let _actual = actualHash?.trim();
@@ -189,63 +191,125 @@ export default function NewGuessPage() {
       return;
     }
 
-    // Determine paid amount like HTML/JS: 25 tokens -> 25e18
-    const provider =
-      (
-        window as Window & {
-          selectedWallet?: WalletProvider;
-          ethereum?: WalletProvider;
-        }
-      ).selectedWallet ||
-      (window as Window & { ethereum?: WalletProvider }).ethereum;
-    const web3 = new Web3(provider as never);
-    const amountWei = paidGuess ? web3.utils.toWei("25", "ether") : "0";
+    setIsSubmitting(true);
+    try {
+      // Determine paid amount like HTML/JS: 25 tokens -> 25e18
+      const provider =
+        (
+          window as Window & {
+            selectedWallet?: WalletProvider;
+            ethereum?: WalletProvider;
+          }
+        ).selectedWallet ||
+        (window as Window & { ethereum?: WalletProvider }).ethereum;
+      const web3 = new Web3(provider as never);
+      const amountWei = paidGuess ? web3.utils.toWei("25", "ether") : "0";
 
-    // If paid guess, ensure user has at least 25 GUESS before proceeding
-    if (paidGuess) {
-      const tokenRO = getTokenContractReadonly();
-      const bal = await tokenRO.methods
-        .balanceOf(account)
-        .call({ from: account }, "latest");
-      if (BigInt(String(bal)) < BigInt(String(amountWei))) {
-        const pretty = npInfura.utils.fromWei(String(bal), "ether");
-        modal.open({
-          title: "Insufficient GUESS balance",
-          message: `You need at least 25 GUESS. Current balance: ${pretty}`,
-          type: "error",
-        });
-        return;
-      }
-    }
-
-    // If paid guess, ensure allowance for Logic contract
-    if (paidGuess) {
-      try {
+      // If paid guess, ensure user has at least 25 GUESS before proceeding
+      if (paidGuess) {
         const tokenRO = getTokenContractReadonly();
-        const logicAddr = localStorage.getItem("logicCrtAddress") as string;
-        const allowance = await tokenRO.methods
-          .allowance(account, logicAddr)
+        const bal = await tokenRO.methods
+          .balanceOf(account)
           .call({ from: account }, "latest");
-        if (BigInt(String(allowance)) < BigInt(String(amountWei))) {
-          const token = getTokenContract(web3);
-          await sendWithFees(
-            web3,
-            token.methods.approve(
-              logicAddr,
-              "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            ),
-            { from: account },
-            {
-              onHash: () => {
-                modal.open({
-                  title: "Approving",
-                  message: "Approving tokens for Logic contract…",
-                  type: "info",
-                });
-              },
-            },
-          );
+        if (BigInt(String(bal)) < BigInt(String(amountWei))) {
+          const pretty = npInfura.utils.fromWei(String(bal), "ether");
+          modal.open({
+            title: "Insufficient GUESS balance",
+            message: `You need at least 25 GUESS. Current balance: ${pretty}`,
+            type: "error",
+          });
+          return;
         }
+      }
+
+      // If paid guess, ensure allowance for Logic contract
+      if (paidGuess) {
+        try {
+          const tokenRO = getTokenContractReadonly();
+          const logicAddr = localStorage.getItem("logicCrtAddress") as string;
+          const allowance = await tokenRO.methods
+            .allowance(account, logicAddr)
+            .call({ from: account }, "latest");
+          if (BigInt(String(allowance)) < BigInt(String(amountWei))) {
+            const token = getTokenContract(web3);
+            await sendWithFees(
+              web3,
+              token.methods.approve(
+                logicAddr,
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+              ),
+              { from: account },
+              {
+                onHash: () => {
+                  modal.open({
+                    title: "Approving",
+                    message: "Approving tokens for Logic contract…",
+                    type: "info",
+                  });
+                },
+              },
+            );
+          }
+        } catch (err) {
+          const error = err as { code?: number; message?: string };
+          if (isGasFeeError(err))
+            modal.open({
+              title: "Gas fee too low",
+              message: "Please increase gas fee and try again.",
+              type: "warning",
+            });
+          else
+            modal.open({
+              title: "Approval error",
+              message: error?.message || "Failed to approve tokens",
+              type: "error",
+            });
+          return;
+        }
+      }
+
+      const data = {
+        Sno: Number(guessId),
+        blockIncrementCount: Number(blockInc),
+        blockHashGuess: dummyHash,
+        tokenSize: Number(tokenSize),
+        paymentPaidBet: amountWei,
+        overWrite: Boolean(overwrite),
+        complex: Boolean(complex),
+        actualHash: _actual,
+        secretKey: _secret,
+        dummyHash,
+        paidGuessBool: Boolean(paidGuess),
+      };
+
+      // Submit on-chain first (MetaMask gas confirmation)
+      try {
+        const { getLogicContract } = await import("../services/eth");
+        const logicAddr = localStorage.getItem("logicCrtAddress") as string;
+        const logic = getLogicContract(web3, logicAddr);
+
+        await sendWithFees(
+          web3,
+          logic.methods.submitBlockGuess(
+            data.Sno,
+            data.blockIncrementCount,
+            data.blockHashGuess,
+            data.tokenSize,
+            data.paymentPaidBet,
+            data.overWrite,
+            data.complex,
+          ),
+          { from: account },
+          {
+            onHash: () => {
+              modal.open({
+                title: "Transaction sent",
+                message: "Don't refresh. Waiting for confirmation...",
+                type: "info",
+              });
+            },
+          },
+        );
       } catch (err) {
         const error = err as { code?: number; message?: string };
         if (isGasFeeError(err))
@@ -256,107 +320,50 @@ export default function NewGuessPage() {
           });
         else
           modal.open({
-            title: "Approval error",
-            message: error?.message || "Failed to approve tokens",
+            title: "Transaction error",
+            message: error?.message || "Failed to send transaction",
             type: "error",
           });
         return;
       }
-    }
 
-    const data = {
-      Sno: Number(guessId),
-      blockIncrementCount: Number(blockInc),
-      blockHashGuess: dummyHash,
-      tokenSize: Number(tokenSize),
-      paymentPaidBet: amountWei,
-      overWrite: Boolean(overwrite),
-      complex: Boolean(complex),
-      actualHash: _actual,
-      secretKey: _secret,
-      dummyHash,
-      paidGuessBool: Boolean(paidGuess),
-    };
+      // Persist like HTML/JS firebase update (local fallback store)
+      const key = `rtdb:${account}`;
+      const prev = localStorage.getItem(key);
+      let table: LocalStorageRTDB = {};
+      try {
+        table = prev ? JSON.parse(prev) : {};
+      } catch {
+        table = {};
+      }
+      const rowName = `row${data.Sno}`;
+      table[rowName] = {
+        ...(table[rowName] || {}),
+        guessId: data.Sno,
+        paidGuess: data.paidGuessBool,
+        tokenSize: data.tokenSize,
+        complex: data.complex,
+        dummyHash: data.dummyHash,
+        actualHash: data.actualHash,
+        secretKey: data.secretKey,
+        // keep targetBlockNumber/targetVerified as contract values
+      };
+      localStorage.setItem(key, JSON.stringify(table));
 
-    // Submit on-chain first (MetaMask gas confirmation)
-    try {
-      const { getLogicContract } = await import("../services/eth");
-      const logicAddr = localStorage.getItem("logicCrtAddress") as string;
-      const logic = getLogicContract(web3, logicAddr);
-
-      await sendWithFees(
-        web3,
-        logic.methods.submitBlockGuess(
-          data.Sno,
-          data.blockIncrementCount,
-          data.blockHashGuess,
-          data.tokenSize,
-          data.paymentPaidBet,
-          data.overWrite,
-          data.complex,
-        ),
-        { from: account },
+      modal.open(
         {
-          onHash: () => {
-            modal.open({
-              title: "Transaction sent",
-              message: "Don't refresh. Waiting for confirmation...",
-              type: "info",
-            });
-          },
+          title: "Success!",
+          message: "Form submitted successfully!",
+          type: "success",
+        },
+        () => {
+          history.pushState({}, "", "/home");
+          window.dispatchEvent(new PopStateEvent("popstate"));
         },
       );
-    } catch (err) {
-      const error = err as { code?: number; message?: string };
-      if (isGasFeeError(err))
-        modal.open({
-          title: "Gas fee too low",
-          message: "Please increase gas fee and try again.",
-          type: "warning",
-        });
-      else
-        modal.open({
-          title: "Transaction error",
-          message: error?.message || "Failed to send transaction",
-          type: "error",
-        });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Persist like HTML/JS firebase update (local fallback store)
-    const key = `rtdb:${account}`;
-    const prev = localStorage.getItem(key);
-    let table: LocalStorageRTDB = {};
-    try {
-      table = prev ? JSON.parse(prev) : {};
-    } catch {
-      table = {};
-    }
-    const rowName = `row${data.Sno}`;
-    table[rowName] = {
-      ...(table[rowName] || {}),
-      guessId: data.Sno,
-      paidGuess: data.paidGuessBool,
-      tokenSize: data.tokenSize,
-      complex: data.complex,
-      dummyHash: data.dummyHash,
-      actualHash: data.actualHash,
-      secretKey: data.secretKey,
-      // keep targetBlockNumber/targetVerified as contract values
-    };
-    localStorage.setItem(key, JSON.stringify(table));
-
-    modal.open(
-      {
-        title: "Success!",
-        message: "Form submitted successfully!",
-        type: "success",
-      },
-      () => {
-        history.pushState({}, "", "/home");
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      },
-    );
   }
 
   const isReadOnly = !overwrite;
@@ -555,8 +562,10 @@ export default function NewGuessPage() {
                   className={submit}
                   variant="primary"
                   type="submit"
+                  disabled={isSubmitting}
+                  aria-busy={isSubmitting}
                 >
-                  Submit
+                  {isSubmitting ? "Submitting…" : "Submit"}
                 </CyberButton>
               )}
             </div>
