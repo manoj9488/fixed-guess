@@ -70,7 +70,6 @@ export default function OnChainPage() {
         console.error("Error parsing matches:", error);
       }
     }
-
   }, []);
 
   // Calculate complex guess data if needed
@@ -249,10 +248,14 @@ export default function OnChainPage() {
             }
 
             const targetStatus = Number(
-              (ev as any)._targetStatus ?? (ev as any).targetStatus ?? 0,
+              (ev["_targetStatus"] as number | string | undefined) ??
+                (ev["targetStatus"] as number | string | undefined) ??
+                0,
             );
             const rewardsTotal = String(
-              (ev as any)._rewardsTotal ?? (ev as any).rewardsTotal ?? "0",
+              (ev["_rewardsTotal"] as string | number | bigint | undefined) ??
+                (ev["rewardsTotal"] as string | number | bigint | undefined) ??
+                "0",
             );
             const isVerified = targetStatus === 2;
 

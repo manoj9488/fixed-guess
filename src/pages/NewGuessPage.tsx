@@ -284,7 +284,6 @@ export default function NewGuessPage() {
       const logicAddr = localStorage.getItem("logicCrtAddress") as string;
       const logic = getLogicContract(web3, logicAddr);
 
-
       await sendWithFees(
         web3,
         logic.methods.submitBlockGuess(
@@ -354,7 +353,8 @@ export default function NewGuessPage() {
         type: "success",
       },
       () => {
-        window.location.href = "/home";
+        history.pushState({}, "", "/home");
+        window.dispatchEvent(new PopStateEvent("popstate"));
       },
     );
   }
@@ -369,7 +369,8 @@ export default function NewGuessPage() {
         trail={[{ label: "Home", to: "/home" }, { label: "New Guess" }]}
         onLogout={() => {
           localStorage.clear();
-          window.location.href = "/session";
+          history.pushState({}, "", "/session");
+          window.dispatchEvent(new PopStateEvent("popstate"));
         }}
       />
 

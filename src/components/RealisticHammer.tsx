@@ -44,7 +44,7 @@ export const RealisticHammer: React.FC<RealisticHammerProps> = ({
 
   return (
     <div
-      className={`relative flex flex-col items-center p-4 bg-gray-900/40 rounded-lg border-2 ${getBorderColor()} transition-all hover:bg-gray-900/60 group`}
+      className={`relative flex flex-col items-center justify-between p-4 bg-gray-900/40 rounded-lg border-2 ${getBorderColor()} transition-all hover:bg-gray-900/60 group w-full min-h-[160px]`}
       onClick={onClick}
     >
       {/* Hammer Visual with Physics */}
@@ -149,8 +149,8 @@ export const RealisticHammer: React.FC<RealisticHammerProps> = ({
       {/* Token Display */}
       {token && (
         <div className="w-full flex flex-col items-center gap-2">
-          <div className="text-xs font-mono text-gray-300 bg-gray-800/80 px-2 py-1.5 rounded border border-gray-700 break-all text-center max-w-full overflow-hidden">
-            <div className="truncate" title={token}>
+          <div className="h-6 flex items-center text-xs font-mono text-gray-300 bg-gray-800/80 px-2 rounded border border-gray-700 break-all text-center max-w-full overflow-hidden w-full">
+            <div className="truncate w-full" title={token}>
               {token}
             </div>
           </div>

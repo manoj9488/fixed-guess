@@ -28,20 +28,23 @@ export default function HomePage() {
     try {
       const logic = localStorage.getItem("logicCrtAddress");
       const account = localStorage.getItem("currentAccount");
-      
+
       if (!logic || !account) {
         // If no contract or account, show empty guesses with default structure
-        const defaultEntries: GuessEntry[] = Array.from({ length: 5 }, (_, i) => ({
-          guessId: i + 1,
-          targetBlockNumber: 0,
-          userHashGuess: "",
-          tokenSize: 0,
-          paidGuess: false,
-          targetVerified: 0,
-          complex: false,
-          actualHash: "",
-          secretKey: "",
-        }));
+        const defaultEntries: GuessEntry[] = Array.from(
+          { length: 5 },
+          (_, i) => ({
+            guessId: i + 1,
+            targetBlockNumber: 0,
+            userHashGuess: "",
+            tokenSize: 0,
+            paidGuess: false,
+            targetVerified: 0,
+            complex: false,
+            actualHash: "",
+            secretKey: "",
+          }),
+        );
         setGuesses(defaultEntries);
         return;
       }
@@ -52,20 +55,22 @@ export default function HomePage() {
       const logicCrt = new web3ro.eth.Contract(LogicAbi as never, logic);
       const entries: GuessEntry[] = [];
       const rtdbRaw = localStorage.getItem(`rtdb:${account}`);
-      const rtdb: Record<string, Record<string, unknown>> = rtdbRaw ? JSON.parse(rtdbRaw) : {};
+      const rtdb: Record<string, Record<string, unknown>> = rtdbRaw
+        ? JSON.parse(rtdbRaw)
+        : {};
 
       for (let i = 1; i <= 5; i++) {
         try {
-          const d = await logicCrt.methods
+          const d = (await logicCrt.methods
             .getGuessEntry(i)
-            .call({ from: account }, "latest") as { 
-              targetBlockNumber: bigint | number; 
-              userHashGuess: string; 
-              tokenSize: bigint | number; 
-              paidGuess: boolean; 
-              targetVerified: bigint | number; 
-              complex: boolean 
-            };
+            .call({ from: account }, "latest")) as {
+            targetBlockNumber: bigint | number;
+            userHashGuess: string;
+            tokenSize: bigint | number;
+            paidGuess: boolean;
+            targetVerified: bigint | number;
+            complex: boolean;
+          };
           const row = rtdb[`row${i}`] || {};
           entries.push({
             guessId: i,
@@ -97,17 +102,20 @@ export default function HomePage() {
     } catch (error) {
       console.error("Error loading guesses:", error);
       // On error, show 5 empty guess slots
-      const defaultEntries: GuessEntry[] = Array.from({ length: 5 }, (_, i) => ({
-        guessId: i + 1,
-        targetBlockNumber: 0,
-        userHashGuess: "",
-        tokenSize: 0,
-        paidGuess: false,
-        targetVerified: 0,
-        complex: false,
-        actualHash: "",
-        secretKey: "",
-      }));
+      const defaultEntries: GuessEntry[] = Array.from(
+        { length: 5 },
+        (_, i) => ({
+          guessId: i + 1,
+          targetBlockNumber: 0,
+          userHashGuess: "",
+          tokenSize: 0,
+          paidGuess: false,
+          targetVerified: 0,
+          complex: false,
+          actualHash: "",
+          secretKey: "",
+        }),
+      );
       setGuesses(defaultEntries);
     }
   }, []);
@@ -201,7 +209,8 @@ export default function HomePage() {
         });
 
       const provider =
-        (window as { selectedWallet?: unknown; ethereum?: unknown }).selectedWallet || 
+        (window as { selectedWallet?: unknown; ethereum?: unknown })
+          .selectedWallet ||
         (window as { selectedWallet?: unknown; ethereum?: unknown }).ethereum;
       if (!provider)
         return modal.open({
@@ -232,7 +241,18 @@ export default function HomePage() {
               type: "info",
             });
           },
-          onReceipt: (receipt: { status?: boolean; events?: { updatedPoolData?: { returnValues?: { _userAddress?: string; updatedStatus?: boolean; updateStatus?: boolean } } } }) => {
+          onReceipt: (receipt: {
+            status?: boolean;
+            events?: {
+              updatedPoolData?: {
+                returnValues?: {
+                  _userAddress?: string;
+                  updatedStatus?: boolean;
+                  updateStatus?: boolean;
+                };
+              };
+            };
+          }) => {
             if (!receipt?.status) throw new Error("Sync failed");
             const ev = receipt.events?.updatedPoolData?.returnValues;
             if (ev?._userAddress?.toLowerCase() === account.toLowerCase()) {

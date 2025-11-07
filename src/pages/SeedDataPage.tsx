@@ -42,7 +42,7 @@ export default function SeedDataPage() {
         });
       }
     }
-  }, []);
+  }, [modal]);
 
   // Format encoded data to proper hex string for Web3
   const formatEncodedData = (encoded: unknown): string => {
@@ -94,10 +94,10 @@ export default function SeedDataPage() {
     if (
       typeof encoded === "object" &&
       encoded !== null &&
-      typeof (encoded as any).length === "number"
+      typeof (encoded as { length?: unknown }).length === "number"
     ) {
       try {
-        const hex = Array.from(encoded as Iterable<number>)
+        const hex = Array.from(encoded as ArrayLike<number>)
           .map((byte) => {
             const h = byte.toString(16);
             return h.length === 1 ? "0" + h : h;

@@ -31,7 +31,9 @@ export default function SessionPage() {
             confirmText: "CONTINUE",
           },
           () => {
-            window.location.href = "/home";
+            // Prefer client-side navigation to avoid full page reloads
+            history.pushState({}, "", "/home");
+            window.dispatchEvent(new PopStateEvent("popstate"));
           },
         );
       } else {
@@ -66,7 +68,8 @@ export default function SessionPage() {
             confirmText: "CONTINUE",
           },
           () => {
-            window.location.href = "/home";
+            history.pushState({}, "", "/home");
+            window.dispatchEvent(new PopStateEvent("popstate"));
           },
         );
       } else {
@@ -229,7 +232,10 @@ export default function SessionPage() {
                   <div className="flex-1 h-px bg-cyber-primary bg-opacity-20" />
                 </div>
                 <button
-                  onClick={() => (window.location.href = "/wallet")}
+                  onClick={() => {
+                    history.pushState({}, "", "/wallet");
+                    window.dispatchEvent(new PopStateEvent("popstate"));
+                  }}
                   className="w-full text-gray-400 font-mono text-sm uppercase tracking-wider transition-colors"
                 >
                   ← EXIT PROTOCOL

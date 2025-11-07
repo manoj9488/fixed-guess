@@ -59,9 +59,13 @@ export const CyberSlider: React.FC<CyberSliderProps> = ({
       className="space-y-2"
       style={{
         // CSS variables used by the thumb styles below
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - custom CSS vars
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore - custom CSS vars
         "--thumb-color": colors.thumb,
-        // @ts-ignore - custom CSS vars
+
         "--thumb-shadow": colors.thumbShadow,
       }}
     >

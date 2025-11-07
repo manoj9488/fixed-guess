@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "../components/Header";
 import { RealisticHammer } from "../components/RealisticHammer";
 import { TreasureBox } from "../components/TreasureBox";
-import { HexGrid, Scanlines } from "../components/cyberpunk";
+import { HexGrid, Scanlines, CyberCard } from "../components/cyberpunk";
 import type { GuessEntry, MatchToken } from "../types";
 
 interface AnimationState {
@@ -210,13 +210,13 @@ export default function HammerAnimationPage() {
         </motion.div>
 
         {/* Main Animation Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* LEFT: PREDICTION HAMMERS */}
-          <div className="space-y-6">
+          <CyberCard glow>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="mb-8"
+              className="mb-6"
             >
               <h2 className="text-2xl font-display font-bold text-cyan-300 mb-3">
                 🔨 PREDICTION HAMMERS
@@ -227,7 +227,7 @@ export default function HammerAnimationPage() {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
               <AnimatePresence>
                 {splitHashes.map((token, index) => {
                   const isCurrentlyAnimating = index === currentStep;
@@ -240,7 +240,8 @@ export default function HammerAnimationPage() {
                       initial={{ opacity: 0, scale: 0.5, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="h-full"
                     >
                       <RealisticHammer
                         index={index}
@@ -254,14 +255,14 @@ export default function HammerAnimationPage() {
                 })}
               </AnimatePresence>
             </div>
-          </div>
+          </CyberCard>
 
           {/* RIGHT: TREASURY BOXES */}
-          <div className="space-y-6">
+          <CyberCard glow>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="mb-8"
+              className="mb-6"
             >
               <h2 className="text-2xl font-display font-bold text-purple-300 mb-3">
                 💎 TREASURY BLOCKS
@@ -273,7 +274,7 @@ export default function HammerAnimationPage() {
             </motion.div>
 
             {matches.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 relative">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 items-stretch">
                 <AnimatePresence>
                   {matches.map((match, index) => {
                     const isBeingHit =
@@ -289,7 +290,8 @@ export default function HammerAnimationPage() {
                         key={`treasure-${index}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
+                        transition={{ delay: 0.2 + index * 0.08 }}
+                        className="relative"
                       >
                         {/* Treasure Box */}
                         <TreasureBox
@@ -312,23 +314,10 @@ export default function HammerAnimationPage() {
                           >
                             <motion.div
                               className="absolute w-8 h-10 bg-gradient-to-b from-amber-600 to-amber-700 rounded shadow-lg transform -translate-x-1/2 -translate-y-1/2"
-                              initial={{
-                                left: "0%",
-                                top: "-50px",
-                                rotate: 0,
-                              }}
-                              animate={{
-                                left: "50%",
-                                top: "50%",
-                                rotate: 360,
-                              }}
-                              transition={{
-                                duration: 0.6,
-                                ease: "easeInOut",
-                              }}
-                              style={{
-                                boxShadow: "0 0 20px rgba(255, 193, 7, 0.8)",
-                              }}
+                              initial={{ left: "0%", top: "-50px", rotate: 0 }}
+                              animate={{ left: "50%", top: "50%", rotate: 360 }}
+                              transition={{ duration: 0.6, ease: "easeInOut" }}
+                              style={{ boxShadow: "0 0 20px rgba(255, 193, 7, 0.8)" }}
                             />
 
                             {/* Particle trail */}
@@ -336,21 +325,9 @@ export default function HammerAnimationPage() {
                               <motion.div
                                 key={i}
                                 className="absolute w-2 h-2 bg-yellow-300 rounded-full blur-sm transform -translate-x-1/2 -translate-y-1/2"
-                                initial={{
-                                  left: "0%",
-                                  top: "-50px",
-                                  opacity: 1,
-                                }}
-                                animate={{
-                                  left: "50%",
-                                  top: "50%",
-                                  opacity: 0,
-                                }}
-                                transition={{
-                                  duration: 0.6,
-                                  delay: i * 0.05,
-                                  ease: "easeInOut",
-                                }}
+                                initial={{ left: "0%", top: "-50px", opacity: 1 }}
+                                animate={{ left: "50%", top: "50%", opacity: 0 }}
+                                transition={{ duration: 0.6, delay: i * 0.05, ease: "easeInOut" }}
                               />
                             ))}
                           </motion.div>
@@ -361,15 +338,9 @@ export default function HammerAnimationPage() {
                           <motion.div
                             className="absolute inset-0 rounded-lg pointer-events-none"
                             initial={{ scale: 0, opacity: 1 }}
-                            animate={{
-                              scale: [1, 1.5, 2],
-                              opacity: [1, 0.5, 0],
-                            }}
+                            animate={{ scale: [1, 1.5, 2], opacity: [1, 0.5, 0] }}
                             transition={{ duration: 0.4 }}
-                            style={{
-                              boxShadow:
-                                "inset 0 0 40px rgba(255, 193, 7, 0.8)",
-                            }}
+                            style={{ boxShadow: "inset 0 0 40px rgba(255, 193, 7, 0.8)" }}
                           />
                         )}
                       </motion.div>
@@ -384,7 +355,7 @@ export default function HammerAnimationPage() {
                 </p>
               </div>
             )}
-          </div>
+          </CyberCard>
         </div>
 
         {/* Progress Bar */}

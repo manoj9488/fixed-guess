@@ -73,7 +73,7 @@ export default function MatchesPage() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       navigate("/hammer-animation");
-    } catch (error) {
+    } catch {
       modal.open({
         title: "Navigation Error",
         message: "Failed to navigate to verification page.",

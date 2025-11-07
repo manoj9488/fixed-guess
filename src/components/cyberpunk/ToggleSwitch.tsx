@@ -15,10 +15,10 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   icon,
 }) => {
   return (
-    <div className="flex items-center justify-between p-4 bg-cyber-dark bg-opacity-50 backdrop-blur-sm rounded-2xl border-2 border-cyber-primary border-opacity-30">
+    <div className="flex items-center justify-between p-4 w-56 shrink-0 bg-cyber-dark bg-opacity-50 backdrop-blur-sm rounded-2xl border-2 border-cyber-primary border-opacity-30">
       <div className="flex items-center gap-3">
         {icon && <div className="text-cyber-primary">{icon}</div>}
-        <span className="font-display font-semibold text-cyber-text uppercase tracking-wider">
+        <span className="font-display font-semibold text-cyber-text uppercase tracking-wider whitespace-nowrap">
           {label}
         </span>
       </div>

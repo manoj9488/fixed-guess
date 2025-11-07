@@ -19,7 +19,12 @@ import { useCyberModal } from "../hooks/useCyberModal";
 
 interface WalletProvider {
   info: { uuid: string; name: string; icon: string; rdns: string };
-  provider: { request: (args: { method: string; params?: unknown[] }) => Promise<string[]> };
+  provider: {
+    request: (args: {
+      method: string;
+      params?: unknown[];
+    }) => Promise<string[]>;
+  };
 }
 
 export default function WalletPage() {
@@ -45,7 +50,10 @@ export default function WalletPage() {
       if (domLoaded.current) handleNewProvider(detail);
       else queue.current.push(detail);
     }
-    window.addEventListener("eip6963:announceProvider", onAnnounce as EventListener);
+    window.addEventListener(
+      "eip6963:announceProvider",
+      onAnnounce as EventListener,
+    );
     domLoaded.current = true;
     while (queue.current.length) {
       const provider = queue.current.shift();
@@ -53,7 +61,10 @@ export default function WalletPage() {
     }
     window.dispatchEvent(new Event("eip6963:requestProvider"));
     return () =>
-      window.removeEventListener("eip6963:announceProvider", onAnnounce as EventListener);
+      window.removeEventListener(
+        "eip6963:announceProvider",
+        onAnnounce as EventListener,
+      );
   }, []);
 
   async function connect() {
@@ -64,7 +75,8 @@ export default function WalletPage() {
       const accounts = await selected.provider.request({
         method: "eth_requestAccounts",
       });
-      (window as { selectedWallet?: unknown }).selectedWallet = selected.provider;
+      (window as { selectedWallet?: unknown }).selectedWallet =
+        selected.provider;
       localStorage.setItem("selectedWalletRdns", selected.info.rdns);
       localStorage.setItem("currentAccount", accounts[0]);
       setConnectedAccount(accounts[0]);
@@ -77,7 +89,8 @@ export default function WalletPage() {
           confirmText: "CONTINUE",
         },
         () => {
-          window.location.href = "/session";
+          history.pushState({}, "", "/session");
+          window.dispatchEvent(new PopStateEvent("popstate"));
         },
       );
     } catch (e) {
@@ -85,7 +98,8 @@ export default function WalletPage() {
       setStatus("CONNECTION FAILED - RETRY PROTOCOL");
       modal.open({
         title: "Connection Failed",
-        message: error?.message || "Unable to connect to wallet. Please try again.",
+        message:
+          error?.message || "Unable to connect to wallet. Please try again.",
         type: "error",
       });
     } finally {
@@ -98,11 +112,34 @@ export default function WalletPage() {
     try {
       const prov =
         selected?.provider ||
-        (window as { selectedWallet?: { request?: unknown; disconnect?: unknown; close?: unknown } }).selectedWallet ||
-        (window as { ethereum?: { request?: unknown; disconnect?: unknown; close?: unknown } }).ethereum;
-      if (prov && typeof prov === 'object' && 'request' in prov) {
+        (
+          window as {
+            selectedWallet?: {
+              request?: unknown;
+              disconnect?: unknown;
+              close?: unknown;
+            };
+          }
+        ).selectedWallet ||
+        (
+          window as {
+            ethereum?: {
+              request?: unknown;
+              disconnect?: unknown;
+              close?: unknown;
+            };
+          }
+        ).ethereum;
+      if (prov && typeof prov === "object" && "request" in prov) {
         try {
-          await (prov as { request: (args: { method: string; params: unknown[] }) => Promise<unknown> }).request({
+          await (
+            prov as {
+              request: (args: {
+                method: string;
+                params: unknown[];
+              }) => Promise<unknown>;
+            }
+          ).request({
             method: "wallet_revokePermissions",
             params: [{ eth_accounts: {} }],
           });
@@ -110,14 +147,24 @@ export default function WalletPage() {
           // Ignore revoke errors
         }
       }
-      if (prov && typeof prov === 'object' && 'disconnect' in prov && typeof prov.disconnect === "function") {
+      if (
+        prov &&
+        typeof prov === "object" &&
+        "disconnect" in prov &&
+        typeof prov.disconnect === "function"
+      ) {
         try {
           await prov.disconnect();
         } catch {
           // Ignore disconnect errors
         }
       }
-      if (prov && typeof prov === 'object' && 'close' in prov && typeof prov.close === "function") {
+      if (
+        prov &&
+        typeof prov === "object" &&
+        "close" in prov &&
+        typeof prov.close === "function"
+      ) {
         try {
           await prov.close();
         } catch {
@@ -303,7 +350,10 @@ const ConnectedView: React.FC<ConnectedViewProps> = ({
             size="lg"
             glow
             icon={<ArrowRight className="w-5 h-5" />}
-            onClick={() => (window.location.href = "/session")}
+            onClick={() => {
+              history.pushState({}, "", "/session");
+              window.dispatchEvent(new PopStateEvent("popstate"));
+            }}
             className="flex-1"
           >
             Continue →
@@ -341,7 +391,7 @@ const ConnectView: React.FC<ConnectViewProps> = ({
   isConnecting,
 }) => {
   return (
-  <motion.div
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
